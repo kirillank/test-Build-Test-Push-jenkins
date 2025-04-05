@@ -21,8 +21,12 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
+                    def imageName = "192.168.56.102:5000/spring-petclinic:${env.BUILD_NUMBER}"
                     docker.withRegistry('http://192.168.56.102:5000') {
-                        docker.image("my-registry:5000/spring-petclinic:${env.BUILD_ID}").push()
+                        def customImage = docker.build(imageName)
+                        customImage.push()
+                        docker.image(imageName).tag('latest')
+                        docker.image("${imageName.split(':')[0]}:latest").push()
                     }
                 }
             }
