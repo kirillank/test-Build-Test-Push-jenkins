@@ -1,5 +1,11 @@
 pipeline {
     agent any
+    
+    environment {
+        REGISTRY = "192.168.56.102:5000"
+        IMAGE_NAME = "spring-petclinic"
+    }
+    
     stages {
         stage('Build & Test') {
             steps {
@@ -11,22 +17,20 @@ pipeline {
                 }
             }
         }
-        stage('Build Docker Image') {
+        
+        stage('Build and Push Docker Image') {
             steps {
                 script {
-                    docker.build("my-registry:5000/spring-petclinic:${env.BUILD_ID}")
-                }
-            }
-        }
-        stage('Push to Registry') {
-            steps {
-                script {
-                    def imageName = "192.168.56.102:5000/spring-petclinic:${env.BUILD_NUMBER}"
-                    docker.withRegistry('http://192.168.56.102:5000') {
-                        def customImage = docker.build(imageName)
-                        customImage.push()
-                        docker.image(imageName).tag('latest')
-                        docker.image("${imageName.split(':')[0]}:latest").push()
+                    // Собираем образ с версионным тегом
+                    def versionedImage = docker.build("${REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}")
+                    
+                    // Пушим версионный образ
+                    docker.withRegistry("http://${REGISTRY}") {
+                        versionedImage.push()
+                        
+                        // Тегируем и пушим latest
+                        versionedImage.tag('latest')
+                        docker.image("${REGISTRY}/${IMAGE_NAME}:latest").push()
                     }
                 }
             }
