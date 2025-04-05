@@ -21,7 +21,7 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry('http://my-registry:5000') {
+                    docker.withRegistry('http://192.168.56.102:5000') {
                         docker.image("my-registry:5000/spring-petclinic:${env.BUILD_ID}").push()
                     }
                 }
